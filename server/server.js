@@ -26,6 +26,17 @@ app.post('/todos', (req, res) => {
 	})
 });
 
+app.get('/todos', (req, res) => {
+	Todo.find().then((todos) => {
+		// Returns an object instead of array,
+		// so it's easier if we want to add more properties
+		res.send({ todos });
+	}, (e) => {
+		// Manually send 400 status when error
+		res.status(400).send(e);
+	})
+});
+
 app.listen(3000, () => {
 	console.log('Started on port 3000');
 });
