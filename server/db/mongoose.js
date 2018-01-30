@@ -5,7 +5,8 @@ const mongoose = require('mongoose');
 // Here, use the built-in library
 mongoose.Promise = global.Promise;
 // Mongoose connect to DB
-const DBURI = `mongodb://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.envDB_HOST}/node-todo-api`;
+const DBURI = `mongodb://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}/node-todo-api`;
+console.log(DBURI);
 mongoose.connect(DBURI || 'mongodb://localhost:27017/TodoApp');
 
 module.exports = { mongoose };
