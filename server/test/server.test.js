@@ -94,7 +94,7 @@ describe('GET /todos/:id', () => {
 			.end(done);
 	});
 
-	it('should return 404 when id is non-object', (done) => {
+	it('should return 404 when Object ID is not valid', (done) => {
 		request(app)
 			.get('/todos/123')
 			.expect(404)
@@ -106,6 +106,46 @@ describe('GET /todos/:id', () => {
 
 		request(app)
 			.get(`/todos/${id}`)
+			.expect(404)
+			.end(done);
+	});
+});
+
+describe('DELETE /todos/:id', () => {
+	it('should correctly delete a todo by ID', (done) => {
+		const id = todos[0]._id.toHexString();
+
+		request(app)
+			.delete(`/todos/${id}`)
+			.expect(200)
+			.expect((res) => {
+				expect(res.body.todo._id).toBe(id);
+			})
+			.end((err, res) => {
+				// Query the database to make sure the todo doesn't exist anymore
+				if (err) {
+					return done(err);
+				}
+
+				Todo.findById(id).then((todo) => {
+					expect(todo).toNotExist(); // Should return NULL
+					done();
+				}).catch((e) => done(e));
+			});
+	});
+
+	it('should return 404 if todo Object ID is not valid', (done) => {
+		request(app)
+			.delete('/todos/123')
+			.expect(404)
+			.end(done);
+	});
+
+	it('should return 404 if todo not found', (done) => {
+		const id = new ObjectID().toHexString();
+
+		request(app)
+			.delete(`/todos/${id}`)
 			.expect(404)
 			.end(done);
 	});
