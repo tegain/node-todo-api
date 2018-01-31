@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
 
@@ -14,7 +15,7 @@ app.use(bodyParser.json());
 // Add new todos Endpoint
 app.post('/todos', (req, res) => {
 
-	// Create new todo with the request element
+	// Create new to-do with the request element
 	const todo = new Todo({
 		text: req.body.text
 	});
@@ -47,8 +48,8 @@ app.get('/todos/:id', (req, res) => {
 
 	// If valid, findById()
 		// Success
-			// if todo, send it back
-			// if not todo, send back 404 with empty body
+			// if to-do, send it back
+			// if not to-do, send back 404 with empty body
 		// Error
 			// 400 / send back empty body
 	if (!ObjectID.isValid(id)) {
@@ -82,6 +83,46 @@ app.delete('/todos/:id', (req, res) => {
 	}).catch((e) => {
 		res.status(400).send();
 	});
+});
+
+app.patch('/todos/:id', (req, res) => {
+	const id = req.params.id;
+	/**
+	 * Pick only the properties passed in the array
+	 * @doc: https://lodash.com/docs/4.17.4#pick
+	 */
+	const body = _.pick(req.body, ['text', 'completed']);
+
+	if (!ObjectID.isValid(id)) {
+		return res.status(404).send();
+	}
+
+	if (_.isBoolean(body.completed) && body.completed) {
+		// Set 'completedAt' timestamp
+		body.completedAt = new Date().getTime();
+	} else {
+		// Reset properties if the `completed` property isn't a boolean or isn't completed
+		body.completed = false;
+		body.completedAt = null;
+	}
+
+	// Update the to-do in the database
+	Todo.findByIdAndUpdate(id, {
+			$set: body
+		}, {
+			// Return the new to-do (similar to MongoDB `returnOriginal`)
+			new: true
+		})
+		.then((todo) => {
+			if (!todo) {
+				return res.status(404).send();
+			}
+
+			res.status(200).send({ todo });
+		})
+		.catch((e) => {
+			res.status(400).send();
+		});
 });
 
 app.listen(port, () => {
