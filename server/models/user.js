@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const _ = require('lodash');
+const jwt = require('jsonwebtoken');
 
-// Define model for a User
-// @validators: http://mongoosejs.com/docs/validation.html
-const User = mongoose.model('User', {
+const UserSchema = new mongoose.Schema({
 	email: {
 		type: String,
 		required: true,
@@ -33,5 +33,50 @@ const User = mongoose.model('User', {
 		}
 	]
 });
+
+/**
+ * Chose which user data will be returned from the server
+ * (only id and email)
+ * @returns {*}
+ */
+UserSchema.methods.toJSON = function () {
+	// Use ES5 to have correct `this` binding
+	const user = this;
+	const userObject = user.toObject();
+
+	return _.pick(userObject, ['_id', 'email']);
+};
+
+/**
+ * Create JWT token
+ * @returns {Promise|*|PromiseLike<T>|Promise<T>}
+ */
+UserSchema.methods.generateAuthToken = function () {
+	const user = this;
+
+	// Set access type
+	const access = 'auth';
+
+	// Create new token
+	const token = jwt.sign({
+		_id: user._id.toHexString(),
+		access
+	}, 'secret123').toString();
+
+	// Push the created token to the user
+	user.tokens.push({
+		access,
+		token
+	});
+
+	// Return the token
+	return user.save().then(() => {
+		return token;
+	})
+};
+
+// Define model for a User
+// @validators: http://mongoosejs.com/docs/validation.html
+const User = mongoose.model('User', UserSchema);
 
 module.exports = { User };
