@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const UserSchema = new mongoose.Schema({
@@ -43,6 +44,9 @@ const UserSchema = new mongoose.Schema({
  * Chose which user data will be returned from the server
  * (only id and email)
  * @returns {*}
+ *
+ * Gets automatically called when respond to Express server
+ * @See https://www.udemy.com/the-complete-nodejs-developer-course-2/learn/v4/questions/1930840
  */
 UserSchema.methods.toJSON = function () {
 	// Use ES5 to have correct `this` binding
@@ -79,6 +83,23 @@ UserSchema.methods.generateAuthToken = function () {
 		return token;
 	})
 };
+
+UserSchema.pre('save', function (next) {
+	const user = this;
+
+	// Prevent re-hashing hashs everytime the script runs even if the password hasn't been modified.
+	// this will run only when password is modified.
+	if (user.isModified('password')) {
+		bcrypt.genSalt(10, (err, salt) => {
+			bcrypt.hash(user.password, salt, (err, hash) => {
+				user.password = hash;
+				next();
+			});
+		});
+	} else {
+		next();
+	}
+});
 
 // Create model method
 UserSchema.statics.findByToken = function (token) {
