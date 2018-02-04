@@ -3,37 +3,12 @@ const request = require('supertest');
 const { ObjectID } = require('mongodb');
 const { app } = require('../server');
 const { Todo } = require('../models/todo');
-
-// Create dummy todos
-const todos = [
-	{
-		_id: new ObjectID(),
-		text: 'First test todo',
-		completed: false
-	},
-	{
-		_id: new ObjectID(),
-		text: 'Second test todo',
-		completed: true,
-		completedAt: 12345
-	}
-];
+const { User } = require('../models/user');
+const { todos, populateTodos, users, populateUsers } = require('./seed/seed');
 
 // Drop database before every test
-beforeEach((done) => {
-	/**
-	 * Models and collections are pretty much the same as a model represents a collection
-	 * and an instance of a model represents a single document.
-	 * The difference is that calling methods (e.g. Model.create) on your model
-	 * will invoke any validation and hooks you wrote.
-	 *
-	 * --> That's why Todo.remove() deletes all the todos
-	 */
-	Todo.remove({}).then(() => {
-		// Add the dummy todos to database
-		return Todo.insertMany(todos);
-	}).then(() => done());
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos', () => {
 	it('should create a new todo', (done) => {
@@ -190,6 +165,80 @@ describe('PATCH /todos/:id', () => {
 				expect(res.body.todo.completed).toBe(false);
 				expect(res.body.todo.completedAt).toNotExist();
 			})
+			.end(done);
+	});
+});
+
+describe('GET /users/me', () => {
+	it('should return a user if authenticated', (done) => {
+		request(app)
+			.get('/users/me')
+			.set('x-auth', users[0].tokens[0].token)
+			.expect(200)
+			.expect((res) => {
+				expect(res.body._id).toBe(users[0]._id.toHexString());
+				expect(res.body.email).toBe(users[0].email);
+			})
+			.end(done);
+	});
+
+	it('should return 401 if not authenticated', (done) => {
+		request(app)
+			.get('/users/me')
+			.expect(401)
+			.expect((res) => {
+				expect(res.body).toEqual({});
+			})
+			.end(done);
+	});
+});
+
+describe('POST /users', () => {
+	it('should create a user', (done) => {
+		const email = 'example@example.com';
+		const password = '123abc!';
+
+		request(app)
+			.post('/users')
+			.send({ email, password })
+			.expect(200)
+			.expect((res) => {
+				expect(res.headers['x-auth']).toExist();
+				expect(res.body._id).toExist();
+				expect(res.body.email).toBe(email);
+			})
+			.end((err) => {
+				if(err) {
+					return done(err);
+				}
+
+				User.findOne({ email }).then((user) => {
+					expect(user).toExist();
+					expect(user.password).toNotBe(password); // Expect a hashed password
+					done();
+				});
+			});
+	});
+
+	it('should return validation error if request invalid', (done) => {
+		const email = 'exampleWrongEmail';
+		const password = '123';
+
+		request(app)
+			.post('/users')
+			.send({ email, password })
+			.expect(400)
+			.end(done);
+	});
+
+	it('should not create user if email already used', (done) => {
+		const email = users[1].email;
+		const password = users[1].password;
+
+		request(app)
+			.post('/users')
+			.send({ email, password })
+			.expect(400)
 			.end(done);
 	});
 });
