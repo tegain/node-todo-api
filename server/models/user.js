@@ -85,6 +85,22 @@ UserSchema.methods.generateAuthToken = function () {
 	})
 };
 
+UserSchema.methods.removeToken = function (token) {
+	const user = this;
+
+	/**
+	 * $pull removes item from an array with certain property
+	 * @doc https://docs.mongodb.com/manual/reference/operator/update/pull/
+ 	 */
+	return user.update({
+		// If the `tokens` object has a property that matches the `token` argument,
+		// it gets removed
+		$pull: {
+			tokens: { token }
+		}
+	})
+};
+
 UserSchema.pre('save', function (next) {
 	const user = this;
 
