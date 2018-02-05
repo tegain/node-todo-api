@@ -131,17 +131,13 @@ UserSchema.statics.findByCredentials = function (email, password) {
 		}
 
 		// Compare provided password and database-hashed one
-		return new Promise((resolve, reject) => {
-			bcrypt.compare(password, user.password, (err, res) => {
-				if (err || !res) {
-					reject();
-				}
+		return bcrypt.compare(password, user.password).then((res) => {
+			if (!res) {
+				return Promise.reject({ 'error': 'Incorrect password' });
+			}
 
-				// If they match, return user to server/server.js
-				if (res) {
-					resolve(user);
-				}
-			});
+			// If they match, return user to server/server.js
+			return user;
 		});
 	})
 };
