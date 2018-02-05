@@ -127,7 +127,7 @@ UserSchema.statics.findByCredentials = function (email, password) {
 	// Find user matching the passed email
 	return User.findOne({ email }).then((user) => {
 		if (!user) {
-			return Promise.reject();
+			return Promise.reject({ 'error': 'No user matching' });
 		}
 
 		// Compare provided password and database-hashed one

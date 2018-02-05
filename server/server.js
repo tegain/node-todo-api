@@ -158,25 +158,6 @@ app.post('/users/login', (req, res) => {
 	}).catch((err) => {
 		res.status(400).send(err);
 	});
-
-	// User.findOne({ email: body.email }).then((user) => {
-	// 	if (!user) {
-	// 		return res.status(404).send();
-	// 	}
-	//
-	// 	bcrypt.compare(body.password, user.password, (err, result) => {
-	// 		if (err) {
-	// 			return res.status(404).send();
-	// 		}
-	//
-	// 		if (result) {
-	// 			console.log(`Welcome, ${user.email}!`);
-	// 			res.status(200).send(user);
-	// 		} else {
-	// 			res.status(404).send();
-	// 		}
-	// 	});
-	// });
 });
 
 app.listen(port, () => {
