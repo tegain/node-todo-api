@@ -118,6 +118,31 @@ UserSchema.statics.findByToken = function (token) {
 		'_id': decoded._id,
 		'tokens.token': token,
 		'tokens.access': 'auth'
+	});
+};
+
+UserSchema.statics.findByCredentials = function (email, password) {
+	const User = this;
+
+	// Find user matching the passed email
+	return User.findOne({ email }).then((user) => {
+		if (!user) {
+			return Promise.reject();
+		}
+
+		// Compare provided password and database-hashed one
+		return new Promise((resolve, reject) => {
+			bcrypt.compare(password, user.password, (err, res) => {
+				if (err || !res) {
+					reject();
+				}
+
+				// If they match, return user to server/server.js
+				if (res) {
+					resolve(user);
+				}
+			});
+		});
 	})
 };
 

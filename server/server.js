@@ -144,6 +144,41 @@ app.get('/users/me', authenticate, (req, res) => {
 	res.send(req.user);
 });
 
+app.post('/users/login', (req, res) => {
+	const body = _.pick(req.body, ['email', 'password']);
+
+	User.findByCredentials(body.email, body.password).then((user) => {
+		/**
+		 * Generate new token for the matching user
+		 * Add the token to the headers
+		 */
+		return user.generateAuthToken();
+	}).then((token) => {
+		res.header('x-auth', token).send(user);
+	}).catch((err) => {
+		res.status(400).send(err);
+	});
+
+	// User.findOne({ email: body.email }).then((user) => {
+	// 	if (!user) {
+	// 		return res.status(404).send();
+	// 	}
+	//
+	// 	bcrypt.compare(body.password, user.password, (err, result) => {
+	// 		if (err) {
+	// 			return res.status(404).send();
+	// 		}
+	//
+	// 		if (result) {
+	// 			console.log(`Welcome, ${user.email}!`);
+	// 			res.status(200).send(user);
+	// 		} else {
+	// 			res.status(404).send();
+	// 		}
+	// 	});
+	// });
+});
+
 app.listen(port, () => {
 	console.log(`Started on port ${port}`);
 });

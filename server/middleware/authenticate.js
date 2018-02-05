@@ -12,7 +12,7 @@ const authenticate = (req, res, next) => {
 
 	User.findByToken(token).then((user) => {
 		if (!user) {
-			return Promise.reject();
+			return Promise.reject(); // Triggers `catch()`
 		}
 
 		req.user = user;
