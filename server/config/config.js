@@ -1,9 +1,20 @@
 const env = process.env.NODE_ENV || 'development';
 
+// Using config.json file
+// if (env === 'development' || env === 'test') {
+// 	// Requiring json file automatically converts it to javascript object
+// 	const config = require('./config.json');
+// 	const envConfig = config[env];
+//
+// 	// Loop through properties and assign them
+// 	Object.keys(envConfig).forEach((key) => {
+// 		process.env[key] = envConfig[key];
+// 	});
+// }
+
+// Using .env file
 if (env === 'development') {
-	process.env.PORT = 3000;
-	process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoApp';
+	require('dotenv').config({ path: '.env.dev' })
 } else if (env === 'test') {
-	process.env.PORT = 3000;
-	process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoAppTest';
+	require('dotenv').config({ path: '.env.test' })
 }
